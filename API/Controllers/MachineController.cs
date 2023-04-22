@@ -1,5 +1,6 @@
 ﻿using Application.DataProvider;
 using Microsoft.AspNetCore.Mvc;
+using Simulator.Models;
 
 namespace API.Controllers
 {
@@ -17,9 +18,9 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetAllMachines()
+        public async Task<ActionResult<List<Machine>>> GetAllMachines()
         {
-            var machines = _data.GetMachines();
+            var machines = await _data.GetMachines();
             return Ok(machines);
         }
     }

@@ -8,8 +8,8 @@ namespace Application.DataProvider
         string MachineDataCacheKey { get; }
         string ProductionDataCacheKey { get; }
 
-        List<ProductionData> GetCurrentProductionData();
-        List<Machine> GetMachines();
-        void UpdateProductionData(ProductionUpdateDTO updateDTO);
+        Task<List<ProductionData>> GetCurrentProductionData();
+        Task<List<Machine>> GetMachines();
+        Task UpdateProductionData(ProductionUpdateDTO updateDTO);
     }
 }

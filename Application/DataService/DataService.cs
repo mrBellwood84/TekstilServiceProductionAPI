@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 using Models.Production;
 using Simulator.Models;
-
+using System.Text.Json;
 
 namespace Application.DataProvider
 {
@@ -10,6 +10,7 @@ namespace Application.DataProvider
         private readonly string machineDataCacheKey = "MachineDataKey";
         private readonly string productionDataCacheKey = "ProductionDataCacheKey";
         private readonly IMemoryCache _cache;
+
 
         public DataService(IMemoryCache cache)
         {
@@ -20,34 +21,54 @@ namespace Application.DataProvider
         public string ProductionDataCacheKey { get => productionDataCacheKey; }
 
 
-        public List<Machine> GetMachines()
+        public async Task<List<Machine>> GetMachines()
         {
             var machines = _cache.Get<List<Machine>>(machineDataCacheKey);
             if (machines == null)
             {
-                machines = createMachines();
+                machines = await getMachinesFromFile();
                 _cache.Set(machineDataCacheKey, machines);
             }
             return machines;
         }
 
-        public List<ProductionData> GetCurrentProductionData()
+        public async Task<List<ProductionData>> GetCurrentProductionData()
         {
             var productionData = _cache.Get<List<ProductionData>>(productionDataCacheKey);
             if (productionData == null)
             {
-                productionData = createProductionData();
+                productionData = await createProductionData();
                 _cache.Set(productionDataCacheKey, productionData);
             }
             return productionData;
         }
 
-        public void UpdateProductionData(ProductionUpdateDTO updateDTO)
+        public async Task UpdateProductionData(ProductionUpdateDTO updateDTO)
         {
-            var data = GetCurrentProductionData();
+            var data = await GetCurrentProductionData();
             var updateIndex = data.FindIndex(x => x.Machine.Id == updateDTO.MachineId);
             data[updateIndex].CurrentValue = updateDTO.Value;
             _cache.Set(productionDataCacheKey, data);
+        }
+
+        private async Task<List<Machine>> getMachinesFromFile()
+        {
+            string path = AppDomain.CurrentDomain.BaseDirectory;
+            string file = Path.Combine(path, "machines.json");
+            bool fileExist = File.Exists(file);
+
+            if (fileExist)
+            {
+                using FileStream openStream = File.OpenRead(file);
+                var fileData = await JsonSerializer.DeserializeAsync<List<Machine>>(openStream);
+                if (fileData != null) return fileData;
+                return new List<Machine>();
+            }
+
+            var newData = createMachines();
+            using FileStream createStream = File.Create(file);
+            await JsonSerializer.SerializeAsync(createStream, newData);
+            return newData;
         }
 
         private List<Machine> createMachines()
@@ -69,12 +90,12 @@ namespace Application.DataProvider
             return machines;
         }
 
-        private List<ProductionData> createProductionData()
+        private async Task<List<ProductionData>> createProductionData()
         {
             var machines = _cache.Get<List<Machine>>(machineDataCacheKey);
             if (machines == null)
             {
-                machines = createMachines();
+                machines = await getMachinesFromFile();
                 _cache.Set(machineDataCacheKey, machines);
             }
 

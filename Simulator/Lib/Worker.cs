@@ -1,4 +1,5 @@
-﻿using Simulator.Models;
+﻿using Grpc.Core;
+using Simulator.Models;
 
 namespace Simulator.Lib
 {
@@ -21,8 +22,15 @@ namespace Simulator.Lib
                 Thread.Sleep(sleep);
                 _productionData.CurrentValue++;
 
-
-                var result = await gRPC_Client.Send(_productionData.Machine.Id, _productionData.CurrentValue);
+                bool result;
+                try
+                {
+                    result = await gRPC_Client.Send(_productionData.Machine.Id, _productionData.CurrentValue);
+                }
+                catch (RpcException)
+                {
+                    result = false;
+                }
 
                 var text = $"{_productionData.Machine.Id} - {_productionData.Machine.DisplayName} - Produced = {_productionData.CurrentValue}, Sendt to api = {result} ";
                 Console.WriteLine(text);

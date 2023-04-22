@@ -1,5 +1,6 @@
 ﻿using Application.DataProvider;
 using Microsoft.AspNetCore.Mvc;
+using Simulator.Models;
 
 namespace API.Controllers
 {
@@ -17,9 +18,9 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetCurrentProductionData()
+        public async Task<ActionResult<List<ProductionData>>> GetCurrentProductionData()
         {
-            var data = _data.GetCurrentProductionData();
+            var data = await _data.GetCurrentProductionData();
             return Ok(data);
         }
     }
